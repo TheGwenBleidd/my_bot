@@ -1,5 +1,4 @@
 # - *- coding: utf- 8 - *-
-from time import time
 from typing import Text
 import telebot
 from telebot import types
@@ -14,7 +13,9 @@ import re
 from datetime import datetime
 from datetime import timedelta
 
-import config
+import sqlite3
+
+import os.path
 
 from user_class import User
 
@@ -22,57 +23,27 @@ import logging
 
 from database_model import SQLighter
 
-#logging
-# logging.basicConfig(level=logging.INFO)
-
 #Bot Config
-# bot = telebot.TeleBot(config.API_TOKEN)
-# bot.remove_webhook()
-# bot.set_webhook(url=config.WEBHOOK_URL)
-
-#Flask Config
-# app = Flask(__name__)
-# sslify = SSLify(app)
-# @app.route('/' + config.secret,methods=['POST'])
-# def webhook():
-#      update = telebot.types.Update.de_json(request.stream.read().decode('utf-8'))
-#      bot.process_new_updates([update])
-#      return "ok",200
-
-#Import questions and answers
-
-#Open questions and answers
-#def first_question(message):
-#chat_id = message.chat.id
-#text = message.text
-# all_question = questions.get_all()
-# iterator = 0
-# while(iterator < len(all_question)):
-#     questions = all_question[iterator]
-#     iterator = iterator + 1
-#     markup = types.ReplyKeyboardMarkup(one_time_keyboard=True,row_width=1)
-#     
-#     markup.add("Есептеу жұмыстарын орындау","Түрлі жабдықтардың нобайын жасау, жаңа техникалар ойлап шығару","Жарақаттанған адамдарға көмек көрсету","Заттардың бетіне, кітаптарға, қабырғаға салынған суреттерді тамашалау","Түрлі қатерден адамдарды қорғау және құтқару")
-#       
-# 
-# 
-# 
-# 
-
-
-
-#User class
-
-logging.basicConfig(level=logging.INFO)
-bot = telebot.TeleBot(config.API_TOKEN)
+bot = telebot.TeleBot(token,threaded=False)
 bot.remove_webhook()
+bot.set_webhook(url=webhook)
 
 bot.enable_save_next_step_handlers(delay=2)
-# bot.load_next_step_handlers()
+bot.load_next_step_handlers()
 
-data_base = SQLighter()
+# #Flask Config
+app = Flask(__name__)
+@app.route('/' + secret,methods=['POST'])
+def webhook():
+     update = telebot.types.Update.de_json(request.stream.read().decode('utf-8'))
+     bot.process_new_updates([update])
+     return "ok",200
+
 users = {}
 
+data_base = SQLighter()
+
+#/start
 @bot.message_handler(commands=['help', 'start'])
 def send_welcome(message):
     markup = types.ReplyKeyboardMarkup(one_time_keyboard=True,resize_keyboard=True,row_width=2)
@@ -184,9 +155,9 @@ def test_start(message):
 
             bot.send_message(user_chat_id, f"Кешіріңіз, сiз тестті уақытша тапсыра алмайсыз.Сіз осы уақыттан бастап {date_test_can_str} тапсыра аласыз")
         else:
-            # user = User()
-            # users[user_chat_id] = user
-            # user.chat_id = user_chat_id
+            user = User()
+            users[user_chat_id] = user
+            user.chat_id = user_chat_id
             bot.send_message(user_chat_id, "Cіз тестті қайтадан тапсыра аласыз!")
             msg = bot.send_message(user_chat_id, "Сізге не ұнайды? Пернетақта арқылы жауап беріңіз",reply_markup=markup)
             bot.register_next_step_handler(msg, first_question1)
@@ -515,38 +486,38 @@ def nineth_question(message):
         test_object = datetime.now() + timedelta(hours=6)
         date_test_can_str = datetime.strftime(test_object, '%d/%m/%Y %H:%M:%S')
         data_base.add_user_test_time(chat_id,date_test_can_str)
-        bot.send_message(chat_id,"Тест аяқталды.Жауабын білу үшін /test_result командасын басыңыз")
+        msg = bot.send_message(chat_id,"Тест аяқталды. /test_result командасын басыңыз")
     elif text == "Сызбаларды, кестелерді түсіну, тексеру, анықтау, түзету":
         user.totalsum = user.totalsum + 2
         test_object = datetime.now() + timedelta(hours=6)
         date_test_can_str = datetime.strftime(test_object, '%d/%m/%Y %H:%M:%S')
         data_base.add_user_test_time(chat_id,date_test_can_str)
-        bot.send_message(chat_id,"Тест аяқталды.Жауабын білу үшін /test_result командасын басыңыз")
+        msg = bot.send_message(chat_id,"Тест аяқталды. /test_result командасын басыңыз")
     elif text == "Өсімдіктердің, орман ағаштарының сырқатын емдеу":
         user.totalsum = user.totalsum + 3
         test_object = datetime.now() + timedelta(hours=6)
         date_test_can_str = datetime.strftime(test_object, '%d/%m/%Y %H:%M:%S')
         data_base.add_user_test_time(chat_id,date_test_can_str)
-        bot.send_message(chat_id,"Тест аяқталды.Жауабын білу үшін /test_result командасын басыңыз")
+        msg = bot.send_message(chat_id,"Тест аяқталды. /test_result командасын басыңыз")
     elif text == "Киімдерді, заттардың пішінін өзгертіп, жөндеу":
         user.totalsum = user.totalsum + 4
         test_object = datetime.now() + timedelta(hours=6)
         date_test_can_str = datetime.strftime(test_object, '%d/%m/%Y %H:%M:%S')
         data_base.add_user_test_time(chat_id,date_test_can_str)
-        bot.send_message(chat_id,"Тест аяқталды.Жауабын білу үшін /test_result командасын басыңыз")
+        msg = bot.send_message(chat_id,"Тест аяқталды. /test_result командасын басыңыз")
     elif text == "Адамдарға қажетті мәліметтерді түсіндіру":
         user.totalsum = user.totalsum + 5
         test_object = datetime.now() + timedelta(hours=6)
         date_test_can_str = datetime.strftime(test_object, '%d/%m/%Y %H:%M:%S')
         data_base.add_user_test_time(chat_id,date_test_can_str)
-        bot.send_message(chat_id,"Тест аяқталды.Жауабын білу үшін /test_result командасын басыңыз")
+        msg = bot.send_message(chat_id,"Тест аяқталды. /test_result командасын басыңыз")
     else:
          msg = bot.send_message(chat_id, "Жауабыңыз дұрыс емес,берілген варианттар арқылы жауап беріңіз",)
          bot.register_next_step_handler(msg, nineth_question)
          return
 
 #test result
-@bot.message_handler(commands=['test_result'])
+# @bot.message_handler(commands=['test_result'])
 def test_result(message):
     chat_id = message.chat.id
     check = data_base.user_exists(chat_id)
@@ -554,7 +525,7 @@ def test_result(message):
     if check == True:
         exists = chat_id in users
         if exists == True:
-            user = users[chat_id] 
+            user = users[chat_id]
             user_result = user.totalsum
             data_base.add_user_test_result(chat_id,user_result)
             get_data = data_base.user_get_all(chat_id)
@@ -567,6 +538,3 @@ def test_result(message):
     if check == False:
         bot.send_message(chat_id, "Сіз әлі тесттен өткен жоқсыз.",)
 
-
-#FAQ command
-bot.polling(none_stop=True)
